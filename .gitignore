@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+venv
+data
+
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*.pdf
+
+*.swp

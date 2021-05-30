@@ -3,55 +3,139 @@ import numpy as np
 class MLP:
 
     def __init__(self,
-                 sizes, # list of sizes for each of the layers
                  loss, # function taking two numpy arrays and returnign loss
-                 activation, # when it is a list different activations are
-                             # used for each of the layers
-                 epochs=10, # TODO: is epochs number equal to iteration number?
+                 layers,
+                 epochs=10,
                  momentum=0.001,
-                 learning_rate=0.001,
-                 batch_size=1,
+                 learning_rate=0.1,
+                 batch_size=64,
                  bias=False,
                  ):
-        self.sizes = sizes
-        self.loss = loss
-        self.activation = activation
+        self.loss = loss()
         self.bias = bias
         self.batch_size = batch_size
         self.momentum = momentum
         self.learning_rate = learning_rate
-        self.layers = []
-        for i in range(1, len(sizes)):
-           self.layers.append(Layer(sizes[i-1], sizes[i]))
+        self.layers = layers
+        self.epochs = epochs
+        # Make sure that layer sizes match
+        for i in range(1, len(layers)):
+            assert layers[i-1].out_size == layers[i].in_size, "Layer sizes don't match"
+
+
+    def train(self, X, Y):
+        batch_number = len(X) // self.batch_size
+        batch_sizes = [self.batch_size for _ in range(batch_number)]
+        batch_sizes[-1] += len(X) % self.batch_size
+        assert sum(batch_sizes) == len(X)
+        for epoch in range(self.epochs):
+            print(f"=========== Epoch {epoch} ============")
+            batch_start = 0
+            for i, batch_size in enumerate(batch_sizes):
+                X_batch = X[batch_start:batch_start+batch_size,:]
+                Y_batch = Y[batch_start:batch_start+batch_size,:]
+                loss = self._train_batch(X_batch, Y_batch).mean(axis=1)[0]
+                print(f"Batch {i+1}/{batch_number} {batch_start+batch_size:5}/{len(X)} - loss: {loss:.3f}")
+                batch_start += batch_size
+        return None
+
+    def _train_batch(self, X, Y):
+        assert len(X) == len(Y), "Length of X and Y do not match"
+        # Sum updates to weights and biases for the whole batch.
+        w_update_sums = [np.zeros((l.in_size, l.out_size)) for l in self.layers]
+        b_update_sums = [np.zeros((1, l.out_size)) for l in self.layers]
+        loss_sum = 0
+        for x, y in zip(X, Y):
+            result = self.forward_pass(x)
+            loss_sum += self.loss(result, y)
+            w_update, b_update = self.backward_pass(x, y)
+            w_update_sums = [w_sum + w_up for w_sum, w_up in zip(w_update_sums, w_update)]
+            b_update_sums = [b_sum + b_up for b_sum, b_up in zip(b_update_sums, b_update)]
+
+        for layer, w_update, b_update in zip(self.layers, w_update_sums, b_update_sums):
+            layer.w -= (self.learning_rate/len(X))*w_update
+            layer.b -= (self.learning_rate/len(X))*b_update
+
+        return loss_sum / len(X)
+
 
     def forward_pass(self, X):
         for layer in self.layers:
             X = X.dot(layer.w)
             if self.bias:
                 X = np.add(X, layer.b)
-            X = self.activation(X)
+            layer.Z = X
+            X = layer.activ_function(X)
+            layer.A = X
         return X
 
 
-    def backward_pass(self, error):
-        pass
+    def backward_pass(self, x, y):
+        """
+        Perform a single backpropagation step to calculate gradient for weight
+        and bias update at every layer.
+        Returns two lists, each containing updates to weigths and biases at
+        each of the layers.
+        """
+        w_updates = [None for _ in self.layers]
+        b_updates = [None for _ in self.layers]
 
-    def train(self):
-        pass
+        last_layer = self.layers[-1]
+        d_activation = last_layer.activ_function.derivative(last_layer.Z)
+        d_loss = self.loss.derivative(last_layer.A, y)
+        delta = d_loss * d_activation
+
+        b_updates[-1] = delta
+        w_updates[-1] = np.dot(self.layers[-2].A.T, delta)
+
+        for current_l in list(reversed(range(len(self.layers))))[1:]:
+            next_l = current_l + 1
+            previous_l = current_l - 1
+
+            z = self.layers[current_l].Z
+            d_activation = self.layers[current_l].activ_function.derivative(z)
+            # The formula for calculating d_loss in other than last layers is
+            # different. We use weights of the next layer, except derivative
+            # of loss function.
+            d_loss = np.dot(delta, self.layers[next_l].w.T) * d_activation
+            delta = d_loss * d_activation
+            b_updates[current_l] = delta
+            previous_A = np.array([x]) if current_l == 0 else self.layers[previous_l].A
+            w_updates[current_l] = np.dot(previous_A.T, delta)
+
+        return w_updates, b_updates
 
     def __repr__(self):
         attributes = ", ".join([f'{k}={v}' for k, v in self.__dict__.items()])
         return f"MLP({attributes})"
 
 class Layer:
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, activ_function):
         self.in_size = in_size
         self.out_size = out_size
+        self.activ_function = activ_function()
         self.w = np.random.random((in_size, out_size))
         self.b = np.random.random((1, out_size))
+        self.momentum = np.zeros((in_size, out_size))
+        # Weighted input to be used by backprop
+        self.Z = np.zeros((1, out_size))
+        # Output of a given layer to be used by backprop
+        self.A = np.zeros((1, out_size))
 
     def __repr__(self):
-        return f"Layer(in_size={self.in_size}, out_size={self.out_size})"
+        return (f"Layer(in_size={self.in_size}, out_size={self.out_size},"
+                f"activation={self.activ_function.__class__.__name__})")
 
-def sigmoid(X):
-   return 1/(1+np.exp(-X))
+
+class Sigmoid:
+    def __call__(self, X):
+        return 1/(1+np.exp(-X))
+    def derivative(self, X):
+        # Derivative of sigmoid is defined using sigmoid itself.
+        return self.__call__(X) * (1 - self.__call__(X))
+
+class SquaredError:
+    def __call__(self, X, Y):
+        return (X - Y)**2
+    def derivative(self, X, Y):
+        return 2*(X-Y)

@@ -82,8 +82,18 @@ class MLP:
             b_update_sums = [b_sum + b_up for b_sum, b_up in zip(b_update_sums, b_update)]
 
         for layer, w_update, b_update in zip(self.layers, w_update_sums, b_update_sums):
-            layer.w -= (self.learning_rate/len(X))*w_update
-            layer.b -= (self.learning_rate/len(X))*b_update
+            w_update = -1*(self.learning_rate/len(X))*w_update
+            w_momentum = self.momentum * layer.w_prev_delta
+            w_delta = w_update + w_momentum
+            layer.w += w_delta
+
+            b_update = -1*(self.learning_rate/len(X))*b_update
+            b_momentum = self.momentum * layer.b_prev_delta
+            b_delta = b_update + b_momentum
+            layer.b += b_delta
+
+            layer.w_prev_delta = w_delta
+            layer.b_prev_delta = b_delta
 
         return loss_sum / len(X)
 
@@ -147,7 +157,8 @@ class Layer:
         self.activ_function = activ_function()
         self.w = np.random.uniform(low=EPSILON, high=1, size=(in_size, out_size))
         self.b = np.random.uniform(low=EPSILON, high=1, size=(1, out_size))
-        self.momentum = np.zeros((in_size, out_size))
+        self.w_prev_delta = np.zeros((in_size, out_size))
+        self.b_prev_delta = np.zeros((1, out_size))
         # Weighted input to be used by backprop
         self.Z = np.zeros((1, out_size))
         # Output of a given layer to be used by backprop

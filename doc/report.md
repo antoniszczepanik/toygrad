@@ -80,13 +80,12 @@ layer. The same will happen for the following layers, until the signal is passed
 to the last layer the "output". This is our resulting signal. Depending
 on the task they may be one or many output neurons. Interpretation of network
 result will also be dependent on the task - the results may be probabilities,
-estimates, etc.
-
+or real values, with any number of output signals.
 
 At each neuron it's input signals are multiplied by given connections
 weight, the bias is added and later the activation function is applied.
 
-Initially weights and biases are initalized randomly from (0, 1) uniform
+Initially weights and biases are initalized randomly from $(0, 1)$ uniform
 distribution. This however makes our network draw random conclusions as well.
 We need a way to indroduce updates to weights and biases to allow our network
 to "learn".
@@ -94,85 +93,245 @@ Hence, we could treat neural network as an optimization problem. The weights
 and biases are the thing that could be adjusted, and we optimize for
 getting the lowest error possible on the network output.
 
-## Backward Propagation
-The Backpropagation algorithm is a supervised learning method
-for multilayer feed-forward networks from the field of Artificial Neural Networks.
+## Training algorithm
 
-The information processing of one or more brain cells, 
-termed neurons, is the inspiration for feed-forward neural networks.
-A neuron receives input signals through its dendrites, which then transmit the signal to the cell body. 
-The axon transmits the signal to synapses,
-which are the connections between a cell's axon and the dendrites of other cells.
+The broad overview of the training algorithm is as follows:
 
-The backpropagation methodology works on the premise of modeling a function by changing the internal weightings of input
-signals to create a predicted output signal. The system is taught via supervised learning, in which the difference
-between the system's output and a known predicted output is supplied to it and utilized to change its internal state.
+1. Pass a single input through the network. (forward pass)
 
-Backpropagation can be used for both classification and regression problems, and we wil be focusing on both in 
-this project.
-When it comes to classification problems, the best results come from networks with one neuron in the output layer for
-each class value. Consider a two-class or binary classification issue with A and B as the class values. These 
-anticipated results would have to be converted into binary vectors with one column for each class value.
-For example, for A and B, [1, 0] and [0, 1] respectively.  This is called a one hot encoding.
-In Regression problems,we Replace output node with a linear activation (i.e. identity
-which just passes the net value through) which more naturally supports unconstrained regression l Since f '(net) 
-is 1 for the linear activation, the output error is just (target – output)
-l Hidden nodes still use a standard non-linear activation
-function (such as sigmoid) with the standard f '(net) 
+2. Measure error at the output layer using loss function.
 
-## Loss Functions
-### BinaryCrossEntropy
-This loss can also be called the Log Loss. Binary crossentropy is a loss function that is used in binary classification tasks. These are tasks that answer a question with only two choices (yes or no, A or B, 0 or 1, left or right). Several independent such questions can be answered at the same time, as in multi-label classification or in binary image segmentation.
-Formally, this loss is equal to the average of the categorical crossentropy loss on many two-category tasks.
-![Sample multilayer perceptron scheme](bll.png)
-where 
-y_i is the ii-th scalar value in the model output.
--(y_i) is the corresponding target value, and output size is the number of scalar values in the model output.
-This is equivalent to the average result of the categorical crossentropy loss function applied to many independent
-classification problems, each problem having only two possible classes with target probabilities y_i and (1-(y_1)).
-  
-### CategoricalCrossEntropy
-Categorical crossentropy is a loss function that is used in multi-class classification tasks. These are tasks where an example can only belong to one out of many possible categories, and the model must decide which one.
-Formally, it is designed to quantify the difference between two probability distributions.
+3. Calculate updates for weights and biases based on the error (using 
+backpropagation) and update the weights. (backward pass)
 
-The categorical crossentropy loss function calculates the loss of an example by computing the following sum:
-![Sample multilayer perceptron scheme](crl.png)
-where y_1 is the ii-th scalar value in the model output, 
-(y_1) is the corresponding target value, and output size is the number of scalar values in the model output.
+4. Repeat the procedure for all training samples.
+
+5. Repeat the procedure based on the whole dataset multiple times called epochs.
+
+### Backpropagation
+
+The algorithm that is used for adjusting the weights of the network is called
+backpropagation. It allows to slighly adjust all of the weights (and the
+biases, if present) based on error between the output layer and actual values.
+It computes the gradient of the loss function with respect to the weights of the
+network for a single input–output example. 
+In principle the backpropagation algorithm works by computing the gradient of
+the loss function with respect to each weight by the chain rule, computing the gradient
+one layer at a time, iterating backward from the last layer to avoid redundant calculations
+of intermediate terms in the chain rule.
+For a more detailed description please refer to TODO:[1]
+
+The algorith is parallelizable and efficient, which makes it feasible to use
+for training multilayer networks, updating weights to minimize loss.
+
+\newpage
 
 # Experiments
 
 ## Impact of various activation functions on accuracy
 
-TODO: how does activation function affect the model’s accuracy?
-TODO: Experiment with sigmoid and twoother activation functions.  
-TODO: The activation function in an output layer should be chosen accordingly to the problem
+To test impact of activation functions on accuracy we took a look at 3 activation functions and 2 datasets.
+The specified activation function was chosen in every layer except the last one.
 
-### Clasification Results
-### Regression Results
+1. Sigmoid
+2. ReLU
+3. TanH
+
+All test where performed on dataset of size 1000 to speed up the computations. If the time allowed
+to calculate the results on datasets of bigger sizes it would be suggested to do that in the 
+future.
+
+###  Simple dataset - binary classification
+
+Apart from the activation functions all other parameters are fixed as follows:
+
+```bash
+layers = [
+        Layer(in_size=2, out_size=5, activ_function=activation_function),
+        Layer(in_size=5, out_size=5, activ_function=activation_function),
+        Layer(in_size=5, out_size=1, activ_function=Sigmoid),
+    ]
+    m = MLP(
+        layers=layers,
+        loss=BinaryCrossEntropy,
+        bias=True,
+        batch_size=16,
+        epochs=100,
+        momentum=0.001,
+        learning_rate=0.5,
+    )
+
+```
+
+`activation_function` is just one of the three specified activations.
+
+The losses on corresponding test dataset are as follows:
+
+```bash
+=======================================================================================
+Simple dataset (train/test sample size 1000)
+=======================================================================================
+Sigmoid  - train loss 0.032 (std:0.02) - test loss 0.033 (std:0.11)
+ReLU     - train loss 0.025 (std:0.04) - test loss 0.031 (std:0.21)
+TanH     - train loss 0.020 (std:0.04) - test loss 0.011 (std:0.08)
+```
+
+We can clearly see that the best performance is achieved by TanH activation in
+this case. This is also confirmed by low loss standard deviation on the test set.
+
+If we inspect the decision boundary of the network our suspicions are further confirmed.
+
+![Decision boundary of Sigmoid activations - Simple dataset](decisions_sig_simple.png){ width=250px }
+![Decision boundary of ReLU activations - Simple dataset](decisions_rel_simple.png){ width=250px }
+![Decision boundary of TanH activations - Simple dataset](decisions_tanh_simple.png){ width=250px }
+
+###  Cube dataset - regression
+
+When performing the regression test on Cube dataset we also fixed all 
+other network parameters. They present in the following way.
+
+```bash
+layers = [
+	Layer(in_size=1, out_size=8, activ_function=activation_function),
+	Layer(in_size=8, out_size=8, activ_function=activation_function),
+	Layer(in_size=8, out_size=1, activ_function=Linear),
+]
+m = MLP(
+	layers=layers,
+	loss=AbsoluteError,
+	bias=True,
+	batch_size=1,
+	epochs=100,
+	momentum=0.99,
+	learning_rate=0.01,
+)
+
+```
+
+`activation_function` is just one of the three specified activations.
+
+The losses on corresponding test dataset are as follows:
+
+```bash
+=======================================================================================
+Simple dataset (train/test sample size 1000)
+=======================================================================================
+Sigmoid  - train loss 0.054 (std:0.04) - test loss 0.044 (std:0.04)
+ReLU     - train loss 0.163 (std:0.14) - test loss 0.269 (std:0.11)
+TanH     - train loss 0.089 (std:0.07) - test loss 0.060 (std:0.03)
+```
+
+We can clearly see that the best performance is achieved by Sigmoid activation in
+this case. We may say that the Sigmoid activation function works better in the
+case of regression in case of this particular dataset.
+
+This confirms that there are no clear rule about selection of activation functions.
+
+We could also inspect predicions on the test dataset for every activation.
+
+![Results of Sigmoid activations - Cube dataset](decisions_sig_cube.png){ width=250px }
+![Results of ReLU activations - Cube dataset](decisions_rel_cube.png){ width=250px }
+![Results of TanH activations - Cube dataset](decisions_tanh_cube.png){ width=250px }
+
 
 ## Impact of number of hidden layers and their size on accuracy
 
-TODO: how does the number of hidden layers and number of neurons in hidden 
-layers impact themodel’s accuracy?  
+To analyze the impact of number and size of hidden layers all remaining parematers
+were fixed. Apart from that the grid of possible architectures was tested with
+discrete hidden layer number and hidden layer size paramters.
 
-TODO: Analyze different architectures
+```bash
+hidden_layers = [1, 3, 5]
+hidden_layer_sizes = [3, 5, 10]
+```
 
-### Clasification Results
-### Regression Results
+### Three Gauss dataset
 
-## Impact of various loss functions  on accuracy
+The following parameters were fixed when performing layer experiments on Gauss dataset:
 
-### Clasification Results
-### Regression Results
+```bash
+ layers = [
+            Layer(in_size=2, out_size=hidden_layer_size, activ_function=Sigmoid),
+	    ... hidden layers of appropriate sizes ...
+            Layer(in_size=hidden_layer_size, out_size=3, activ_function=SoftMax),
+        ]
+        m = MLP(
+            layers=layers,
+            loss=CategoricalCrossEntropy,
+            bias=True,
+            batch_size=16,
+            epochs=100,
+            momentum=0.1,
+            learning_rate=0.2,
+        )
+
+```
+
+The results are presented in the table below. Column names correspond to number of hidden layers.
+Row names correspond to number of neurons in each hidden layer.
+
+
+```bash
+ 		1 			3 			5
+3 	0.178 (std: 0.40) 	0.367 (std: 0.02) 	0.367 (std: 0.02)
+5 	0.078 (std: 0.18) 	0.367 (std: 0.02) 	0.367 (std: 0.03)
+10 	0.078 (std: 0.20) 	0.367 (std: 0.02) 	0.370 (std: 0.05)
+```
+
+We can see that the network learns best in case of having only a single hidden layer.
+Especially the single hidden layer size 5 and 10 produce promising results.
+
+It is possible that if we adjusted other network parameters we would get 
+better result for larger networks, as they didn't have a chance to learn.
+(the learning rate or the momentum were to small).
+
+### Activation dataset
+
+The following parameters were fixed when performing layer experiments on Activation dataset:
+
+```bash
+layers = [
+            Layer(in_size=1, out_size=hidden_layer_size, activ_function=Sigmoid),
+	    ... hidden layers of appropriate sizes ...
+            Layer(in_size=hidden_layer_size, out_size=1, activ_function=Linear),
+        ]
+        m = MLP(
+            layers=layers,
+            loss=AbsoluteError,
+            bias=True,
+            batch_size=16,
+            epochs=70,
+            momentum=0.1,
+            learning_rate=0.01,
+        )
+
+```
+
+The results are presented in the table below. Column names correspond to number of hidden layers.
+Row names correspond to number of neurons in each hidden layer.
+
+
+```bash
+ 		1 			3 			5
+3 	4.596 (std: 8.19) 	109.870 (std: 57.15) 	109.703 (std: 59.94)
+5 	27.830 (std: 21.04) 	109.718 (std: 59.91) 	109.743 (std: 59.07)
+10 	109.669 (std: 63.01) 	109.679 (std: 60.51) 	109.683 (std: 60.37)
+```
+
+Once again the best result are achieved with small network and hidden layer size.
 
 # Conclusions
-TODO: Including reasons for success/failure, further research proposals...
+
+We successfuly experimented with both network architecture as well as activation functions.
+Unfortunatelly it is very hard to propose specific conclusions. Neural network hyperparameters
+seem to be very dependent on specific datasets, and therefore another parameters may
+work better in case of different cases.
 
 # References
-1. Brownlee, J. (2016). How to Code a Neural Network with Backpropagation In Python (from scratch). 
-   Machine Learning Mastery.
-   Retrieved from https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
-   
+1. Andrej Karpathy Micrograd implementation.
+   Retrieved from: https://github.com/karpathy/micrograd
 2. MLPs with Backpropagation. CS 472 – Backpropagation. 
    Retrieved from https://axon.cs.byu.edu/~martinez/classes/478/slides/BP.pdf
+3. Brownlee, J. (2016). How to Code a Neural Network with Backpropagation In Python (from scratch). 
+   Machine Learning Mastery.
+   Retrieved from https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/

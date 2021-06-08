@@ -1,7 +1,6 @@
 import numpy as np
 
 EPSILON = 0.000_001
-LEAKY_RELU_ALPHA = 0.2
 
 class MLP:
 
@@ -30,6 +29,8 @@ class MLP:
         # Training and testing stats to return from this function.
         train_losses = []
         test_losses = []
+        train_losses_stds = []
+        test_losses_stds = []
 
         batch_number = len(X) // self.batch_size
         batch_sizes = [self.batch_size for _ in range(batch_number)]
@@ -53,12 +54,15 @@ class MLP:
             mean_epoch_loss = np.mean(epoch_losses)
             std_epoch_loss = np.std(epoch_losses)
             train_losses.append(mean_epoch_loss)
+            train_losses_stds.append(std_epoch_loss)
 
             test_loss = self.test(X_test, Y_test)
             mean_test_loss = np.mean(test_loss)
             std_test_loss = np.std(test_loss)
-
             test_losses.append(mean_test_loss)
+            test_losses_stds.append(std_test_loss)
+
+            train_losses_stds
             if (epoch + 1) % 10 == 0:
                 print(f"Epoch {epoch+1:4}"
                       f" - train loss {mean_epoch_loss:3.3f} (std:{std_epoch_loss:3.2f})"
@@ -66,6 +70,8 @@ class MLP:
         return {
             "train_losses": train_losses,
             "test_losses": test_losses,
+            "train_losses_stds": train_losses_stds,
+            "test_losses_stds": test_losses_stds,
         }
 
     def test(self, X_test, Y_test):
@@ -214,14 +220,6 @@ class ReLU(Activation):
         return np.maximum(0, X)
     def derivative(self, X):
         return (X>0) * 1
-
-class LeakyReLU(Activation):
-    def __call__(self, X):
-        return np.where(X > 0, X, X * LEAKY_RELU_ALPHA)
-    def derivative(self, X):
-        dx = np.ones_like(X)
-        dx[X < 0] = LEAKY_RELU_ALPHA
-        return dx
 
 class TanH(Activation):
     def __call__(self, X):

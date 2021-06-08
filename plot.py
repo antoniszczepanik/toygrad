@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-def plot_train_test_losses(train_losses, test_losses, title):
+def plot_train_test_losses(train_losses, test_losses, title, **kwargs):
     epoch_number = range(1, len(train_losses) + 1)
     plt.plot(epoch_number, train_losses, 'r-')
     plt.plot(epoch_number, test_losses, 'b-')
@@ -12,7 +12,7 @@ def plot_train_test_losses(train_losses, test_losses, title):
     plt.show()
 
 
-def plot_categorical_decisions(X, Y, mlp, title, binary=False, grid_res=0.1):
+def plot_categorical_decisions(X, Y, mlp, title, binary=False, grid_res=0.1, **kwargs):
     x1, x2 = X[:,0], X[:,1]
     # define the x and y scale
     x1grid = np.arange(x1.min()-0.1, x1.max()+0.1, grid_res)
@@ -47,7 +47,7 @@ def plot_categorical_decisions(X, Y, mlp, title, binary=False, grid_res=0.1):
     plt.title(title)
     plt.show()
 
-def plot_regression_decisions(X, Y, mlp, title, grid_res=0.1):
+def plot_regression_decisions(X, Y, mlp, title, grid_res=0.1, **kwargs):
     Y_vis = []
     for x in X:
         Y_vis.append(mlp.forward_pass(x)[0][0])
@@ -59,7 +59,7 @@ def plot_regression_decisions(X, Y, mlp, title, grid_res=0.1):
     plt.title(title)
     plt.show()
 
-def plot_network(mlp):
+def plot_network(mlp, **kwargs):
     weights = []
     for layer_num, layer in enumerate(mlp.layers):
         print("====================================")

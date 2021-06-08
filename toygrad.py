@@ -1,6 +1,7 @@
 import numpy as np
 
 EPSILON = 0.000_001
+LEAKY_RELU_ALPHA = 0.2
 
 class MLP:
 
@@ -36,23 +37,32 @@ class MLP:
         assert sum(batch_sizes) == len(X)
         for epoch in range(self.epochs):
             batch_start = 0
-            losses_sum_epoch = 0
+            epoch_losses = []
             for i, batch_size in enumerate(batch_sizes):
                 X_batch = X[batch_start:batch_start+batch_size,:]
                 Y_batch = Y[batch_start:batch_start+batch_size,:]
 
-                mean_batch_loss = self._train_batch(X_batch, Y_batch).mean(axis=1)
+                batch_loss = self._train_batch(X_batch, Y_batch)
+                mean_batch_loss = batch_loss.mean(axis=1)
+                std_batch_loss = batch_loss.std()
                 assert len(mean_batch_loss) == 1, "We should get mean of losses across the batch"
-                losses_sum_epoch += mean_batch_loss[0]
+                epoch_losses.append(mean_batch_loss[0])
 
                 batch_start += batch_size
 
-            mean_epoch_loss = losses_sum_epoch/len(batch_sizes)
+            mean_epoch_loss = np.mean(epoch_losses)
+            std_epoch_loss = np.std(epoch_losses)
             train_losses.append(mean_epoch_loss)
-            test_loss = self.test(X_test, Y_test).mean(axis=1)[0]
-            test_losses.append(test_loss)
+
+            test_loss = self.test(X_test, Y_test)
+            mean_test_loss = np.mean(test_loss)
+            std_test_loss = np.std(test_loss)
+
+            test_losses.append(mean_test_loss)
             if (epoch + 1) % 10 == 0:
-                print(f"Epoch {epoch+1:4} - train loss {mean_epoch_loss:5.5f}, test loss {test_loss:5.5f}")
+                print(f"Epoch {epoch+1:4}"
+                      f" - train loss {mean_epoch_loss:3.3f} (std:{std_epoch_loss:3.2f})"
+                      f" - test loss {mean_test_loss:3.3f} (std:{std_test_loss:3.2f})")
         return {
             "train_losses": train_losses,
             "test_losses": test_losses,
@@ -62,11 +72,11 @@ class MLP:
         """
         Get average loss across testing dataset.
         """
-        loss_sum = 0
+        losses = []
         for x, y in zip(X_test, Y_test):
             result = self.forward_pass(x)
-            loss_sum += self.loss(result, y)
-        return loss_sum / len(X_test)
+            losses.append(self.loss(result, y).mean())
+        return losses
 
     def _train_batch(self, X, Y):
         assert len(X) == len(Y), "Length of X and Y do not match"
@@ -101,8 +111,8 @@ class MLP:
     def forward_pass(self, X):
         for layer in self.layers:
             X = X.dot(layer.w)
-            if self.bias:
-                X = np.add(X, layer.b)
+            #if self.bias:
+            X = np.add(X, layer.b)
             layer.Z = X
             X = layer.activ_function(X)
             layer.A = X
@@ -144,7 +154,7 @@ class MLP:
             previous_A = np.array([x]) if current_l == 0 else self.layers[previous_l].A
             w_updates[current_l] = np.dot(previous_A.T, delta)
 
-        return w_updates, b_updates
+        return w_updates, b_updates if self.bias else [0 for _ in b_updates]
 
     def __repr__(self):
         attributes = ", ".join([f'{k}={v}' for k, v in self.__dict__.items()])
@@ -193,15 +203,47 @@ class SoftMax(Activation):
         s = X.reshape(-1,1)
         return np.diagflat(s) - np.dot(s, s.T)
 
+class Linear(Activation):
+    def __call__(self, X):
+        return X
+    def derivative(self, X):
+        return np.ones(X.shape)
+
+class ReLU(Activation):
+    def __call__(self, X):
+        return np.maximum(0, X)
+    def derivative(self, X):
+        return (X>0) * 1
+
+class LeakyReLU(Activation):
+    def __call__(self, X):
+        return np.where(X > 0, X, X * LEAKY_RELU_ALPHA)
+    def derivative(self, X):
+        dx = np.ones_like(X)
+        dx[X < 0] = LEAKY_RELU_ALPHA
+        return dx
+
+class TanH(Activation):
+    def __call__(self, X):
+        return (np.exp(X) - np.exp(-X)) / (np.exp(X) + np.exp(-X))
+    def derivative(self, X):
+        return 1 - (self.__call__(X)**2)
+
 
 class Loss:
     pass
 
 class SquaredError(Loss):
     def __call__(self, X, Y):
-        return (X - Y)**2
+        return np.multiply(Y - X,Y - X)
     def derivative(self, X, Y):
-        return 2*(X-Y)
+        return -2*(X-Y)
+
+class AbsoluteError(Loss):
+    def __call__(self, X, Y):
+        return np.abs(X - Y)
+    def derivative(self, X, Y):
+        return (X-Y)
 
 class BinaryCrossEntropy(Loss):
     def __call__(self, X, Y):

@@ -46,3 +46,26 @@ def plot_categorical_decisions(X, Y, mlp, title, binary=False, grid_res=0.1):
     plt.ylabel("X2")
     plt.title(title)
     plt.show()
+
+def plot_regression_decisions(X, Y, mlp, title, grid_res=0.1):
+    Y_vis = []
+    for x in X:
+        Y_vis.append(mlp.forward_pass(x)[0][0])
+    plt.scatter(X, Y, c='red', s=5, label="REAd")
+    plt.scatter(X, Y_vis, c='blue', s=5)
+    plt.legend(['Real outputs', 'MLP predictions'])
+    plt.xlabel("Inputs")
+    plt.ylabel("Resulting values")
+    plt.title(title)
+    plt.show()
+
+def plot_network(mlp):
+    weights = []
+    for layer_num, layer in enumerate(mlp.layers):
+        print("====================================")
+        print(f"Layer {layer_num}")
+        print("====================================")
+        print("Weights")
+        print(np.around(layer.w, 3))
+        print("Biases")
+        print(np.around(layer.b, 3))

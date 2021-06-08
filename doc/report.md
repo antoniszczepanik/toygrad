@@ -94,7 +94,51 @@ Hence, we could treat neural network as an optimization problem. The weights
 and biases are the thing that could be adjusted, and we optimize for
 getting the lowest error possible on the network output.
 
+## Backward Propagation
+The Backpropagation algorithm is a supervised learning method
+for multilayer feed-forward networks from the field of Artificial Neural Networks.
 
+The information processing of one or more brain cells, 
+termed neurons, is the inspiration for feed-forward neural networks.
+A neuron receives input signals through its dendrites, which then transmit the signal to the cell body. 
+The axon transmits the signal to synapses,
+which are the connections between a cell's axon and the dendrites of other cells.
+
+The backpropagation methodology works on the premise of modeling a function by changing the internal weightings of input
+signals to create a predicted output signal. The system is taught via supervised learning, in which the difference
+between the system's output and a known predicted output is supplied to it and utilized to change its internal state.
+
+Backpropagation can be used for both classification and regression problems, and we wil be focusing on both in 
+this project.
+When it comes to classification problems, the best results come from networks with one neuron in the output layer for
+each class value. Consider a two-class or binary classification issue with A and B as the class values. These 
+anticipated results would have to be converted into binary vectors with one column for each class value.
+For example, for A and B, [1, 0] and [0, 1] respectively.  This is called a one hot encoding.
+In Regression problems,we Replace output node with a linear activation (i.e. identity
+which just passes the net value through) which more naturally supports unconstrained regression l Since f '(net) 
+is 1 for the linear activation, the output error is just (target – output)
+l Hidden nodes still use a standard non-linear activation
+function (such as sigmoid) with the standard f '(net) 
+
+## Loss Functions
+### BinaryCrossEntropy
+This loss can also be called the Log Loss. Binary crossentropy is a loss function that is used in binary classification tasks. These are tasks that answer a question with only two choices (yes or no, A or B, 0 or 1, left or right). Several independent such questions can be answered at the same time, as in multi-label classification or in binary image segmentation.
+Formally, this loss is equal to the average of the categorical crossentropy loss on many two-category tasks.
+![Sample multilayer perceptron scheme](bll.png)
+where 
+y_i is the ii-th scalar value in the model output.
+-(y_i) is the corresponding target value, and output size is the number of scalar values in the model output.
+This is equivalent to the average result of the categorical crossentropy loss function applied to many independent
+classification problems, each problem having only two possible classes with target probabilities y_i and (1-(y_1)).
+  
+### CategoricalCrossEntropy
+Categorical crossentropy is a loss function that is used in multi-class classification tasks. These are tasks where an example can only belong to one out of many possible categories, and the model must decide which one.
+Formally, it is designed to quantify the difference between two probability distributions.
+
+The categorical crossentropy loss function calculates the loss of an example by computing the following sum:
+![Sample multilayer perceptron scheme](crl.png)
+where y_1 is the ii-th scalar value in the model output, 
+(y_1) is the corresponding target value, and output size is the number of scalar values in the model output.
 
 # Experiments
 
@@ -124,3 +168,11 @@ TODO: Analyze different architectures
 
 # Conclusions
 TODO: Including reasons for success/failure, further research proposals...
+
+# References
+1. Brownlee, J. (2016). How to Code a Neural Network with Backpropagation In Python (from scratch). 
+   Machine Learning Mastery.
+   Retrieved from https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
+   
+2. MLPs with Backpropagation. CS 472 – Backpropagation. 
+   Retrieved from https://axon.cs.byu.edu/~martinez/classes/478/slides/BP.pdf

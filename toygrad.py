@@ -266,7 +266,11 @@ class SoftMax(Activation):
         # aka. no infs even if X values are large.
         shifted_X = X - np.max(X)
         exps = np.exp(shifted_X)
-        return exps / np.sum(exps, axis=1)
+        result = exps / np.sum(exps, axis=1)
+        # Result needs to be larger then 0 to allow exp to work properly on
+        # them.
+        result[result == 0] = EPSILON
+        return result
 
     def derivative(self, X):
         X = self.__call__(X)
@@ -284,7 +288,7 @@ class Linear(Activation):
 
 class ReLU(Activation):
     def __call__(self, X):
-        return np.maximum(0, X)
+        return np.maximum(EPSILON, X)
 
     def derivative(self, X):
         return (X > 0) * 1

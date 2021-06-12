@@ -202,12 +202,19 @@ class MLP:
 
     def _log_stats(self, epoch):
         def print_stats():
-            info = (f"Epoch {epoch+1:4}"
-                    f" - train loss {self._get_last_stat(self.loss, 'train'):6.3f}"
-                    f" (std:{self._get_last_stat(self.loss, 'train_std'):6.2f})"
-                    f" - test loss {self._get_last_stat(self.loss, 'test'):6.3f}"
-                    f" (std:{self._get_last_stat(self.loss, 'test_std'):6.2f})")
+            info = f"Epoch {epoch+1:4}"
+            for m in self.metrics:
+                keys = [
+                    get_metric_key(m, "train"),
+                    get_metric_key(m, "train_std"),
+                    get_metric_key(m, "test"),
+                    get_metric_key(m, "test_std")
+                ]
+                for key in keys:
+                    if key in self.stats:
+                        info += f"\n {key}: {self.stats[key][-1]:5.3f}"
             print(info)
+
         if self.verbosity == 1 and (epoch+1) % 10 == 0:
             print_stats()
         elif self.verbosity == 2:
@@ -291,7 +298,8 @@ class ReLU(Activation):
         return np.maximum(EPSILON, X)
 
     def derivative(self, X):
-        return (X > 0) * 1
+        X = (X > 0) * 1
+        return  np.maximum(EPSILON, X)
 
 
 class TanH(Activation):

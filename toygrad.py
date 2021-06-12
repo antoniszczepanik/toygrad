@@ -299,15 +299,15 @@ class ReLU(Activation):
 
     def derivative(self, X):
         X = (X > 0) * 1
-        return  np.maximum(EPSILON, X)
+        return np.maximum(EPSILON, X)
 
 
 class TanH(Activation):
     def __call__(self, X):
-        return (np.exp(X) - np.exp(-X)) / (np.exp(X) + np.exp(-X))
+        return np.tanh(X)
 
     def derivative(self, X):
-        return 1 - (self.__call__(X)**2)
+        return 1.0 - np.tanh(X)**2
 
 
 class Metric:
@@ -336,7 +336,7 @@ class Loss(Metric):
 
 class SquaredError(Loss):
     def __call__(self, Y_hat, Y):
-        return np.multiply(Y - Y_hat, Y - Y_hat)
+        return np.square(Y - Y_hat)
 
     def derivative(self, Y_hat, Y):
         return -2*(Y_hat-Y)

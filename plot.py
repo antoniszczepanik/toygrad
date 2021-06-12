@@ -11,7 +11,7 @@ def plot_metric(metric: Metric, stats, title, **kwargs):
     plt.plot(epoch_number, stats[test_key], 'b-')
     plt.legend([train_key, test_key])
     plt.xlabel('Epoch')
-    plt.ylabel('Loss')
+    plt.ylabel(str(metric))
     plt.title(title)
     plt.show()
 

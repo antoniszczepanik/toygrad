@@ -1,11 +1,15 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-def plot_train_test_losses(train_losses, test_losses, title, **kwargs):
-    epoch_number = range(1, len(train_losses) + 1)
-    plt.plot(epoch_number, train_losses, 'r-')
-    plt.plot(epoch_number, test_losses, 'b-')
-    plt.legend(['Training Loss', 'Test Loss'])
+from toygrad import Metric, get_metric_key
+
+def plot_metric(metric: Metric, stats, title, **kwargs):
+    train_key = get_metric_key(metric, "train")
+    test_key = get_metric_key(metric, "test")
+    epoch_number = range(1, len(stats[train_key]) + 1)
+    plt.plot(epoch_number, stats[train_key], 'r-')
+    plt.plot(epoch_number, stats[test_key], 'b-')
+    plt.legend([train_key, test_key])
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.title(title)
@@ -28,8 +32,8 @@ def plot_categorical_decisions(X, Y, mlp, title, binary=False, grid_res=0.1, **k
 
     for x in X_vis:
         # Single variable is an output
-        pred = mlp.forward_pass(x)
-        Y_vis.append(pred[0][0] if binary else np.argmax(pred))
+        pred = mlp._forward_pass(x)
+        Y_vis.append(pred[0] if binary else np.argmax(pred))
 
     Y_vis = np.array(Y_vis)
     # reshape the predictions back into a grid
@@ -50,7 +54,7 @@ def plot_categorical_decisions(X, Y, mlp, title, binary=False, grid_res=0.1, **k
 def plot_regression_decisions(X, Y, mlp, title, grid_res=0.1, **kwargs):
     Y_vis = []
     for x in X:
-        Y_vis.append(mlp.forward_pass(x)[0][0])
+        Y_vis.append(mlp._forward_pass(x)[0])
     plt.scatter(X, Y, c='red', s=5, label="REAd")
     plt.scatter(X, Y_vis, c='blue', s=5)
     plt.legend(['Real outputs', 'MLP predictions'])

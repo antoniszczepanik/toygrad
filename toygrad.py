@@ -201,17 +201,17 @@ class MLP:
         return stats
 
     def _log_stats(self, epoch):
-            def print_stats()
-                info = (f"Epoch {epoch+1:4}"
-                        f" - train loss {self._get_last_stat(self.loss, 'train'):6.3f}"
-                        f" (std:{self._get_last_stat(self.loss, 'train_std'):6.2f})"
-                        f" - test loss {self._get_last_stat(self.loss, 'test'):6.3f}"
-                        f" (std:{self._get_last_stat(self.loss, 'test_std'):6.2f})")
-                print(info)
-            if self.verbosity == 1 and (epoch+1) % 10 == 0:
-                print_stats()
-            elif self.verbosity == 2:
-                print_stats()
+        def print_stats():
+            info = (f"Epoch {epoch+1:4}"
+                    f" - train loss {self._get_last_stat(self.loss, 'train'):6.3f}"
+                    f" (std:{self._get_last_stat(self.loss, 'train_std'):6.2f})"
+                    f" - test loss {self._get_last_stat(self.loss, 'test'):6.3f}"
+                    f" (std:{self._get_last_stat(self.loss, 'test_std'):6.2f})")
+            print(info)
+        if self.verbosity == 1 and (epoch+1) % 10 == 0:
+            print_stats()
+        elif self.verbosity == 2:
+            print_stats()
 
     def _get_last_stat(self, metric: Metric, m_type):
         key = get_metric_key(metric, m_type)

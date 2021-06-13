@@ -260,7 +260,7 @@ class Activation:
 
 class Sigmoid(Activation):
     def __call__(self, X):
-        return 1/(1+np.exp(-X))
+        return 1. / (1. + np.exp(-X))
 
     def derivative(self, X):
         # Derivative of sigmoid is defined using sigmoid itself.
@@ -269,15 +269,8 @@ class Sigmoid(Activation):
 
 class SoftMax(Activation):
     def __call__(self, X):
-        # Shifting X by it's max makes softmax numerically stable.
-        # aka. no infs even if X values are large.
-        shifted_X = X - np.max(X)
-        exps = np.exp(shifted_X)
-        result = exps / np.sum(exps, axis=1)
-        # Result needs to be larger then 0 to allow exp to work properly on
-        # them.
-        result[result == 0] = EPSILON
-        return result
+        y = np.exp(X - np.max(X, -1, keepdims=True))
+        return y / np.sum(y, -1, keepdims=True)
 
     def derivative(self, X):
         X = self.__call__(X)
@@ -294,12 +287,14 @@ class Linear(Activation):
 
 
 class ReLU(Activation):
-    def __call__(self, X):
-        return np.maximum(EPSILON, X)
+    def __call__(self, X, alpha=0.):
+        above_threshold = X * (X >= 0.)
+        above_threshold = np.clip(above_threshold, 0.0, np.inf)
+        below_threshold = alpha * X * (X < 0.)
+        return below_threshold + above_threshold
 
     def derivative(self, X):
-        X = (X > 0) * 1
-        return np.maximum(EPSILON, X)
+        return np.clip((X > 0)*1, EPSILON, np.inf)
 
 
 class TanH(Activation):
@@ -360,7 +355,8 @@ class BinaryCrossEntropy(Loss):
 
 class CategoricalCrossEntropy(Loss):
     def __call__(self, Y_hat, Y):
-        return -1 * (Y*np.log(Y_hat))
+        output = np.clip(Y_hat, 1e-7, 1 - 1e-7)
+        return np.sum(Y * -np.log(output), axis=-1, keepdims=False)
 
     def derivative(self, Y_hat, Y):
         return Y_hat-Y

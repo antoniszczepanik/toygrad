@@ -1,6 +1,6 @@
 ---
 # Compile with `pandoc report.md -o report.pdf --highlight-style zenburn`
-title: Appendix -  Neural Netoworks Project 3 - training MLP on MNIST dataset
+title: Appendix -  Neural Networks Project 3 - training MLP on MNIST dataset
 geometry: margin=4cm
 author:
   - Antoni Szczepanik
@@ -14,7 +14,7 @@ date: 11th June 2021, Warsaw
 
 The task for the second part of the assignment is to train previously created
 MLP on MNIST dataset. This is a dataset of annotated handwritten digits.
-By inspecting a few of the entries we can get inutive feel of the dataset.
+By inspecting a few of the entries we can get intuitive feel of the dataset.
 
 ![MNIST dataset sample](mnist_sample.png){ width=400px }
 
@@ -41,7 +41,7 @@ Please note that MNIST model training and analysis is done based in `mnist.ipynb
 ### Measuring accurracy
 
 As defined on Kaggle platform the metric against which our solution will be
-evaluated is accuracy. Accurracy is a very intuitive metrix which is defined
+evaluated is accuracy. Accuracy is a very intuitive metrics which is defined
 as ratio of number of correct predictions and number of all samples.
 
 \begin{equation}
@@ -63,23 +63,24 @@ At first we decide to perform a single training with very simple, almost default
 parameters. This will allow us to benchmark other parameter combinations 
 against it.
 
-```bash
-model parameters and results here
-```
-
+TODO: Add first trial.
 
 ### Adding normalisation
 
+TODO: Sum up first trail results.
+TODO: Describe what normalisation has been done.
+TODO: Sum up second train results.
+
 ### Automatic Hyperparameter tuning
 
-We have successfuly achieved decent accuracy, but we would like to further improve
+We have successfully achieved decent accuracy, but we would like to further improve
 our results. To do that we tried to search for the parameters that might
 yield better results on the testing set.
-We performed Grid Search, over many possible architectures paramters.
+We performed Grid Search over many possible architectures and parameters.
 
 The top 30 results with regards to test set accuracy are presented below.
-Remaining results are present in `doc/` folder in source code. All results could
-be reproduced using mnist notebook.
+Full results are present in `doc/` folder in form of a csv file. All results could
+be reproduced using `mnist.ipynb` notebook.
 
 
 |rank   |activ  |l_size|l_num|lr    |epochs |test_acc     |train_loss|train_loss_std|momentum|
@@ -117,17 +118,68 @@ be reproduced using mnist notebook.
 |30     |TanH   |128   |1    |0.400 |20     |0.841        |0.364     |2.063         |0.500   |
 |
 
-By inspecting the best results training and testing accuracy it looks like
-we may be already overfitting our data.
+The graph of training and testing accuracy is as follows:
 
 ![Train/Test accuracy of the result with "best" hyperparamters](best_hp_test_acc.png)
 
 
-In the next steps we will try to reduce overfitting and further improve the
-most interesting architectures.
+By inspecting the graph it looks like we are not over-fitting yet. It is promising
+and means we may be able to increase testing accuracy further.
+In the next steps we will try to further improve the most interesting architecture.
 
 
-### Opt
+### Further adjusting layer size
+
+As we noticed in the automatic optimization step, all of the networks in top 30 are a 
+single layer networks. We will stick to that assumption in further improvements.
+We will also stick to TanH activation function, as it also was common across the
+best results.
+
+Also, as the top network has the highest neuron number we will try to increase
+it even more. We will check what is the performance of the top network, but
+with 256, 512 and 1000 neurons in the hidden layer.
+
+TODO: Experiment with larger ones.
+
+TODO: Sum up training with larger number of neurons.
+
+### Final training
+
+To train or final solution to the problem we let the network of specified
+architecture train for a little longer than before. We performed a
+total of 120 epochs. After a hundred epochs with the best parameters found 
+so far we decided to decrease learning rate.
+We hoped that a little more granularity may help even further decrease the
+loss value. We are aware there are solutions to build learning rate optimization
+into the network, but this was not introduced in our case.
+
+1. Training the network with previously found parameters.
+
+2. Trying to further optimize after decreasing learning rate to 0.001.
+
+The final result we have achieved is 92% accuracy on our testing set.
+The network of this architecture was used to make final Kaggle predictions.
+
+### Further improvements
+
+There are several major steps that would surely allow to train even better model.
+
+First of all we could perform more preprocessing steps to our image. 
+- The process called deskewing could be applied to make sure all the images
+are rotated similarly.
+- We could get rid of the input values which do not change to decrease the number of
+input neurons. If some neurons are constant on all the images (either on or off)
+then we do not need to perform activations for them.
+- We could augment our training dataset by extending it with images that were 
+slightly modified, for example rotating them a little or moving by random
+offsets.
+
+
+
 
 # Conclusions
 
+
+### References
+
+[Various algorithms results on MNIST dataset](http://yann.lecun.com/exdb/mnist/)

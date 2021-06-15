@@ -38,14 +38,14 @@ After that one can start `jupyterlab` with:
 ```bash
 python -m jupyterlab
 ```
-Please note that MNIST model training and analysis is done based in `mnist.ipynb` notebook.
+Please note that MNIST model training and analysis is done in `mnist.ipynb` jupyter notebook.
 
 # Network Development
 
 # Measuring accurracy
 
 As defined on Kaggle platform the metric against which our solution will be
-evaluated is accuracy. Accuracy is a very intuitive metrics which is defined
+evaluated is accuracy. Accuracy is a very intuitive metric which is defined
 as ratio of number of correct predictions and number of all samples.
 
 \begin{equation}
@@ -237,17 +237,32 @@ To train or final solution to the problem we let the network of specified
 architecture train for a little longer than before. We performed a
 total of 120 epochs. After a hundred epochs with the best parameters found 
 so far we decided to decrease learning rate.
-We hoped that a little more granularity may help even further decrease the
+We hoped that a little more granularity may help even further increase the
 accuracy. We are aware there are solutions to build learning rate optimization
 into the network, but this was not introduced in our case.
 
 1. Training the network with the same set of parameters but over larger amount of epochs.
 
-2. Trying to further optimize after decreasing learning rate to 0.001.
+![Final network architecture trained over 100 epochs - 91.3% accuracy](final_network_100epochs.png)
+
+We can see that we successfuly improved the result up to **91.3%** accuracy only by
+increasing the trainign duration. Unfortunately we can notice that our network
+is over-fitting the data - training dataset accuracy seems to increase even though
+testing accuracy remains constant.
+
+2. Trying to further optimize after decreasing learning rate to 0.001
+
+![Final network architecture over additional 15 epochs - 91.7% accuracy](final_network_additional_15_epochs.png)
 
 
-The final result we have achieved is **92%** accuracy on our testing set.
+The final result we have achieved is **91.7%** accuracy on our testing set.
+It seems that additional epochs with low learning rate only slightly
+increased testing score but the increase in training accuracy was significant.
+
 Such trained network was used to make final Kaggle predictions.
+
+**The final result reported by Kaggle is an accuracy of 91.5%**, which we consider
+a very satisfactory result.
 
 # Further improvements
 
@@ -270,6 +285,9 @@ more successful.
 
 - Dropout layers could be introduced. They  are simple yet effective method of
 handling over-fitting.
+
+- Larger amount of hidden layers could be used. That soulution could prove
+feasable especially with more compute available. (i.e. on GPU, or using HPC machine)
 
 # References
 

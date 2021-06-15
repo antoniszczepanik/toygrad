@@ -294,7 +294,7 @@ class ReLU(Activation):
         return below_threshold + above_threshold
 
     def derivative(self, X):
-        return np.clip((X > 0)*1, EPSILON, np.inf)
+        return np.clip((X > 0)*1, 0, np.inf)
 
 
 class TanH(Activation):

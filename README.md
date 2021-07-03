@@ -1,7 +1,7 @@
 # Toygrad
 
-A minimal MLP neural net library implemented in ~350 lines of code using only Numpy,
-putting emphasise on code readability and extendibility.
+A minimal MLP neural net library implemented in ~350 lines of code using only NumPy,
+putting emphasis on code readability and extendibility.
 
 This was written as kind of "do once and forget" project but could be easily reused:
 
